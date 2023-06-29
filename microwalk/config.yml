@@ -15,9 +15,11 @@ general:
     sample-rate: 50
 
 testcase:
-  module: load
+  module: random
   module-options:
-    input-directory: $$$TESTCASE_DIRECTORY$$$
+    length: 16
+    amount: 10
+    output-directory: $$$TESTCASE_DIRECTORY$$$
 
 trace:
   module: pin

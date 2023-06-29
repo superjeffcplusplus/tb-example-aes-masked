@@ -15,7 +15,7 @@ echo "Main directory: $mainDir"
 
 # Generate MAP file for library
 pushd "$MAP_GENERATOR_PATH" || exit
-dotnet MapFileGenerator.dll "$mainDir"/lib"$libName".so "$thisDir"/lib"$libName".map
+dotnet MapFileGenerator.dll "$mainDir/lib$libName.so" "$thisDir/lib$libName.map"
 popd || exit
 
 # Build targets
