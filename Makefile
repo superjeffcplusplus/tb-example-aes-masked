@@ -5,8 +5,10 @@ CC           = gcc
 LD           = gcc
 AR           = ar
 ARFLAGS      = rcs
-CFLAGS       = -Wall -Os -c -g -Wno-unused-function 
+CFLAGS       = -Wall -Os -c -g -fPIC -Wno-unused-function
 LDFLAGS      = -Wall -Os -Wl,-Map,test.map -Wno-unused-function 
+
+MASKED	   	 = 1
 
 ifdef AES192
 CFLAGS += -DAES192=1
@@ -26,10 +28,12 @@ INCLUDE_PATH = /usr/lib/avr/include
 # splint static check
 SPLINT       = splint test.c aes.c -I$(INCLUDE_PATH) +charindex -unrecog
 
-default: test.elf
+#default: test.elf
 
 .SILENT:
-.PHONY:  lint clean
+.PHONY:  lint clean all
+
+all: lib_ar
 
 test.hex : test.elf
 	echo copy object-code to new image and format in hex
@@ -43,20 +47,28 @@ aes.o : aes.c aes.h
 	echo [CC] $@ $(CFLAGS)
 	$(CC) $(CFLAGS) -o $@ $<
 
-test.elf : aes.o test.o
-	echo [LD] $@
-	$(LD) $(LDFLAGS) -o $@ $^
-
-aes.a : aes.o
+libtinyaes.a : aes.o
 	echo [AR] $@
 	$(AR) $(ARFLAGS) $@ $^
+lib_ar : libtinyaes.a
 
-lib : aes.a
+libtinyaes.so : aes.o
+	echo [LD] $@
+	$(LD) -shared -o $@ $^
+lib_so : libtinyaes.so
 
-clean:
-	rm -f *.OBJ *.LST *.o *.gch *.out *.hex *.map *.elf *.a
+aes32.o : aes.c aes.h
+	echo [CC] $@ $(CFLAGS)
+	$(CC) $(CFLAGS) -m32 -o $@ $<
+libtinyaes_32bits.a : aes32.o
+	echo [AR] $@
+	$(AR) $(ARFLAGS) $@ $^
+lib_ar_32 : libtinyaes_32bits.a
 
-test:
+clean :
+	rm -f *.OBJ *.LST *.o *.gch *.out *.hex *.map *.elf *.a *.so
+
+test :
 	make clean && make && ./test.elf
 	make clean && make AES192=1 && ./test.elf
 	make clean && make AES256=1 && ./test.elf
@@ -64,5 +76,10 @@ test:
 	make clean && make MASKED=1 && ./test.elf
 	make clean && make MASKED=1 AES192=1 && ./test.elf
 	make clean && make MASKED=1 AES256=1 && ./test.elf
-lint:
+
+test.elf : aes.o test.o
+	echo [LD] $@
+	$(LD) $(LDFLAGS) -o $@ $^
+
+lint :
 	$(call SPLINT)
